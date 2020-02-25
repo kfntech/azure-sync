@@ -1,0 +1,24 @@
+{
+  "name": "azure-sync",
+  "version": "1.0.0",
+  "description": "A service for managing and maintaining synchronicity bettwen Azure and its mirror",
+  "scripts": {
+    "start": "nodemon --exec ts-node src/index.ts",
+    "build": "tsc && node ./dist/index.js"
+  },
+  "author": "Michael May",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/tedious": "^4.0.0",
+    "nodemon": "^2.0.2",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.8.2"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "^12.1.0",
+    "configstore": "^5.0.1",
+    "dotenv": "^8.2.0",
+    "rxjs": "^6.5.4",
+    "tedious": "^8.0.1"
+  }
+}
