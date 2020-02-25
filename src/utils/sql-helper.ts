@@ -1,5 +1,5 @@
 import { Observable, Subject, combineLatest, fromEventPattern, of } from 'rxjs'
-import { map, switchMap, mapTo, share, combineAll, takeUntil } from 'rxjs/operators'
+import { map, switchMap, mapTo, share, combineAll, takeUntil, tap } from 'rxjs/operators'
 import { Connection, Request, ColumnValue } from 'tedious'
 
 export const sendQuery$ = new Subject<string>()
@@ -27,6 +27,7 @@ export const sqlDatabase$ = new Observable<Connection>(sub =>
                 handler => res.addListener('connect', handler),
                 handler => res.removeListener('connect', handler)
             ).pipe(
+                tap(() => console.log(`Connected to ${process.env.AZURE_SQL_DATABASE!}`)),
                 mapTo(res)
             ),
             sendQuery$.pipe(
@@ -53,5 +54,6 @@ export const sqlDatabase$ = new Observable<Connection>(sub =>
             combineAll<{ [key: string]: ColumnValue }>()
         )
     }),
+    tap(res => console.log(`${res.length} table rows fetched`)),
     share()
 )

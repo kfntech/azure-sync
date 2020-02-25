@@ -4,6 +4,8 @@
   "description": "A service for managing and maintaining synchronicity bettwen Azure and its mirror",
   "scripts": {
     "start": "nodemon --exec ts-node src/index.ts",
+    "list": "ts-node src/index.ts --action=list --container=patriciopersonal",
+    "clean": "ts-node src/index.ts --action=clean --container=patriciopersonal --source=PatricioPersonalMusics:CoverKey,PatricioPersonalMusics:AudioKey,PatricioPersonalMoments:ImageKey",
     "build": "tsc && node ./dist/index.js"
   },
   "author": "Michael May",
@@ -16,8 +18,10 @@
   },
   "dependencies": {
     "@azure/storage-blob": "^12.1.0",
+    "@types/minimist": "^1.2.0",
     "configstore": "^5.0.1",
     "dotenv": "^8.2.0",
+    "minimist": "^1.2.0",
     "rxjs": "^6.5.4",
     "tedious": "^8.0.1"
   }
