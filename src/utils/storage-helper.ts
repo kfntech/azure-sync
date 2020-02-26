@@ -1,5 +1,5 @@
-import { Observable, Subject, from, of } from 'rxjs'
-import { map, switchMap, expand, share, combineAll, takeWhile, tap } from 'rxjs/operators'
+import { Subject, from, of } from 'rxjs'
+import { map, switchMap, expand, share, combineAll, takeWhile, tap, withLatestFrom } from 'rxjs/operators'
 import { BlobServiceClient, BlobItem } from '@azure/storage-blob'
 
 /**
@@ -11,9 +11,8 @@ export const setContainer$ = new Subject<string>()
  * Access a container set by setContainer. The Observable will remain open to deliver
  * new containers when set by setContainer.
  */
-export const blobContainer$ = new Observable<BlobServiceClient>(sub =>
-    sub.next(BlobServiceClient.fromConnectionString(connectionString()))
-).pipe(
+export const blobContainer$ = of(BlobServiceClient).pipe(
+    map(res => res.fromConnectionString(connectionString())),
     switchMap(res => setContainer$.pipe(
         map(x => res.getContainerClient(x))
     )),
@@ -38,11 +37,8 @@ export const blobList$ = blobContainer$.pipe(
 /**
  * Configures a client for sending batch requests. The Observable completes immediately.
  */
-export const blobBatch$ = new Observable<BlobServiceClient>(sub => {
-    sub.next(BlobServiceClient.fromConnectionString(connectionString()))
-    sub.complete()
-}
-).pipe(
+export const blobBatch$ = of(BlobServiceClient).pipe(
+    map(res => res.fromConnectionString(connectionString())),
     map(res => res.getBlobBatchClient()),
     share()
 )

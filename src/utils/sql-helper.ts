@@ -1,59 +1,56 @@
 import { Observable, Subject, combineLatest, fromEventPattern, of } from 'rxjs'
-import { map, switchMap, mapTo, share, combineAll, takeUntil, tap } from 'rxjs/operators'
+import { map, switchMap, share, combineAll, takeUntil, tap } from 'rxjs/operators'
 import { Connection, Request, ColumnValue } from 'tedious'
 
 export const sendQuery$ = new Subject<string>()
 const rowCount$ = new Subject<number>()
 
-export const sqlDatabase$ = new Observable<Connection>(sub =>
-    sub.next(new Connection({
+export const sqlDatabase$ = new Observable<Request>(sub => {
+    const connection = new Connection({
         authentication: {
             options: {
-                userName: process.env.AZURE_SQL_USERNAME!,
-                password: process.env.AZURE_SQL_PASSWORD!
+                userName: process.env.SQL_USERNAME!,
+                password: process.env.SQL_PASSWORD!
             },
             type: "default"
         },
-        server: process.env.AZURE_SQL_SERVER!,
+        server: process.env.SQL_SERVER!,
         options: {
-            database: process.env.AZURE_SQL_DATABASE!,
+            database: process.env.SQL_DATABASE!,
             encrypt: true
         }
-    }))
-).pipe(
-    switchMap(res => 
-        combineLatest(
-            fromEventPattern<void>(
-                handler => res.addListener('connect', handler),
-                handler => res.removeListener('connect', handler)
-            ).pipe(
-                tap(() => console.log(`Connected to ${process.env.AZURE_SQL_DATABASE!}`)),
-                mapTo(res)
-            ),
-            sendQuery$.pipe(
-                map(x => new Request(
-                    x, 
-                    (err, rowCount) => err ? console.error(err.message) : rowCount$.next(rowCount)
-                )),
-            )
+    })
+
+    combineLatest(
+        fromEventPattern<void>(
+            handler => connection.addListener('connect', handler),
+            handler => connection.removeListener('connect', handler),
+        ),
+        sendQuery$.pipe(
+            map(x => new Request(x, (err, rowCount) => err ? sub.error(err.message) : rowCount$.next(rowCount))),
         )
-    ),
-    switchMap(res => {
-        res[0].execSql(res[1])
-        return fromEventPattern<ColumnValue[]>(
-            handler => res[1].addListener('row', handler),
-            handler => res[1].removeListener('row', handler)
-        ).pipe(
-            takeUntil(rowCount$),
-            map(res => of(
-                res.reduce<{ [key: string]: ColumnValue }>((acc, cur) => { 
-                    acc[cur.metadata.colName] = cur; 
-                    return acc; 
-                }, {})
-            )),
-            combineAll<{ [key: string]: ColumnValue }>()
-        )
-    }),
+    ).subscribe(res => {
+        sub.next(res[1])
+        connection.execSql(res[1])
+    }, err => sub.error(err), () => sub.complete())
+
+    return () => {
+        connection.close()
+    }
+}).pipe(
+    switchMap(res => fromEventPattern<ColumnValue[]>(
+        handler => res.addListener('row', handler),
+        handler => res.removeListener('row', handler)
+    ).pipe(
+        takeUntil(rowCount$),
+        map(res => of(
+            res.reduce<{ [key: string]: ColumnValue }>((acc, cur) => { 
+                acc[cur.metadata.colName] = cur; 
+                return acc; 
+            }, {})
+        )),
+        combineAll<{ [key: string]: ColumnValue }>()
+    )),
     tap(res => console.log(`${res.length} table rows fetched`)),
     share()
 )
