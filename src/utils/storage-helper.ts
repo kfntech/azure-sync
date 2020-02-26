@@ -14,7 +14,8 @@ export const setContainer$ = new Subject<string>()
 export const blobContainer$ = of(BlobServiceClient).pipe(
     map(res => res.fromConnectionString(connectionString())),
     switchMap(res => setContainer$.pipe(
-        map(x => res.getContainerClient(x))
+        map(x => res.getContainerClient(x)),
+        tap(() => console.log('Created blob container client'))
     )),
     share()
 )
@@ -40,6 +41,7 @@ export const blobList$ = blobContainer$.pipe(
 export const blobBatch$ = of(BlobServiceClient).pipe(
     map(res => res.fromConnectionString(connectionString())),
     map(res => res.getBlobBatchClient()),
+    tap(() => console.log('Created blob batch client')),
     share()
 )
 

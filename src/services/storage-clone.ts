@@ -1,29 +1,37 @@
-import { Observable, of, from, combineLatest } from "rxjs"
+import { Observable, of, from, concat, combineLatest } from "rxjs"
 import { blobList$, setContainer$, blobContainer$ } from "../utils/storage-helper"
-import { switchMap, concat, map, tap, shareReplay } from "rxjs/operators"
+import { switchMap, map, tap, combineAll, mapTo, skip } from "rxjs/operators"
 import { BlobItem, ContainerClient } from "@azure/storage-blob"
-import { write } from "../utils/file-helper"
+import { write, resolveFolder, transport$ } from "../utils/file-helper"
 
-export const download$ = combineLatest(
-    blobList$.pipe(
-        switchMap(res => 
-            concat(...res.map(el => of(el)))
-        ),
-    ),
-    of('abc')
-    // blobContainer$.pipe(
-    //     shareReplay(1)
-    // )
-).pipe(
-    // switchMap(res => 
-    //     concat(...res[0].map(el => of([el, res[1]])))
-    // ),
-    tap(res => console.log('tester', res))
-    // switchMap<[BlobItem, ContainerClient], Observable<string>>(res => from(
-    //     res[1].getBlockBlobClient(res[0].name).download(0)
-    // ).pipe(
-    //     switchMap(x => from(
-    //         write('BlobTemp', containerName + '/' + res[0].name, x.readableStreamBody) || ''
-    //     ))
-    // )),
+export const find$ = (containerName: string) => new Observable<BlobItem[]>(sub => {
+    blobList$.subscribe(res => sub.next(res), err => sub.error(err), () => sub.complete())
+    setContainer$.next(containerName)
+})
+
+export const mirror$ = (containerName: string) => new Observable<[BlobItem[], ContainerClient, string]>(sub => {
+    const folderPath = resolveFolder(resolveFolder('../BlobTemp'), containerName)
+
+    combineLatest(blobList$, blobContainer$)
+    .subscribe(res => sub.next([res[0], res[1], folderPath]), err => sub.error(err), () => sub.complete())
+
+    setContainer$.next(containerName)
+}).pipe(
+    switchMap(res => concat(
+        ...res[0].map(el => 
+            from(res[1].getBlockBlobClient(el.name).download(0)).pipe(
+                tap(() => console.log(`Streaming - ${el.name}`)),
+                switchMap(x => from(write(res[2], el.name, x.readableStreamBody)))
+            )
+        )
+    ).pipe(
+        tap(res => console.log(`Downloaded ${res}`)),
+        skip(res[0].length - 1),
+        mapTo(res[0])
+    )),
+    switchMap(() => transport$('BlobTemp'))
 )
+
+export const replace$ = (containerName: string) => {
+    // Mirror Server
+}

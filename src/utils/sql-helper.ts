@@ -54,3 +54,5 @@ export const sqlDatabase$ = new Observable<Request>(sub => {
     tap(res => console.log(`${res.length} table rows fetched`)),
     share()
 )
+
+export const connectionString = () => `-S ${process.env.SQL_SERVER!} -U ${process.env.SQL_USERNAME!} -P ${process.env.SQL_PASSWORD!} -d ${process.env.SQL_DATABASE!}`

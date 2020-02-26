@@ -1,7 +1,7 @@
 import { concat, of } from 'rxjs'
-import { resolve } from 'path'
 import { tap, switchMap, skip } from 'rxjs/operators'
 import { exec$, transport$, resolveFolder } from '../utils/file-helper'
+import { connectionString } from '../utils/sql-helper'
 
 export const backup$ = (tableNames: string[]) => of(resolveFolder('../SyncTemp')).pipe(
     switchMap(res => concat(
@@ -13,7 +13,5 @@ export const backup$ = (tableNames: string[]) => of(resolveFolder('../SyncTemp')
 )
 
 export const restore$ = () => {
-
+    // Mirro Server
 }
-
-export const connectionString = () => `-S ${process.env.AZURE_SQL_SERVER!} -U ${process.env.AZURE_SQL_USERNAME!} -P ${process.env.AZURE_SQL_PASSWORD!} -d ${process.env.AZURE_SQL_DATABASE!}`

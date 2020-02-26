@@ -27,20 +27,15 @@ export const transport$ = (folderName: string) => new Observable<string>(sub => 
     tap(res => rmdirSync(res, { recursive: true }))
 )
 
-export const write = (folderName: string, fileName: string, readerStream?: NodeJS.ReadableStream) => {
-    if(!readerStream) return
-    
-    const path = resolve('../', folderName, fileName)
-    if(!existsSync(path)) return
-
+export const write = (folderName: string, blobName: string, readerStream?: NodeJS.ReadableStream) => {
     return new Promise<string>((resolvePromise, reject) => {
-        console.log(`filestream - ${fileName}`)
+        if(!readerStream) return reject('No stream found')
+        if(!existsSync(folderName)) return reject('Folder not found!')
+
+        const path = resolve(folderName, blobName)
         // Create a writable stream
         var writerStream = createWriteStream(path)
-        readerStream.on('end', () => {
-            console.log(`true complete ${fileName}`)
-            resolvePromise(fileName)
-        })
+        readerStream.on('end', () => resolvePromise(path))
         writerStream.on('error', err => reject(err))
         // Pipe the read and write operations
         // read input.txt and write data to output.txt
