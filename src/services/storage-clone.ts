@@ -1,16 +1,18 @@
-import { Observable, of, from, concat, combineLatest } from "rxjs"
+import { Observable, from, concat, combineLatest, iif, of } from "rxjs"
 import { blobList$, setContainer$, blobContainer$ } from "../utils/storage-helper"
-import { switchMap, map, tap, combineAll, mapTo, skip } from "rxjs/operators"
+import { switchMap, tap, mapTo, skip } from "rxjs/operators"
 import { BlobItem, ContainerClient } from "@azure/storage-blob"
 import { write, resolveFolder, transport$ } from "../utils/file-helper"
+
+const folderName = 'BlobTemp'
 
 export const find$ = (containerName: string) => new Observable<BlobItem[]>(sub => {
     blobList$.subscribe(res => sub.next(res), err => sub.error(err), () => sub.complete())
     setContainer$.next(containerName)
 })
 
-export const mirror$ = (containerName: string) => new Observable<[BlobItem[], ContainerClient, string]>(sub => {
-    const folderPath = resolveFolder(resolveFolder('../BlobTemp'), containerName)
+export const mirror$ = (containerName: string, remote: boolean = false) => new Observable<[BlobItem[], ContainerClient, string]>(sub => {
+    const folderPath = resolveFolder(resolveFolder(`../${folderName}`), containerName)
 
     combineLatest(blobList$, blobContainer$)
     .subscribe(res => sub.next([res[0], res[1], folderPath]), err => sub.error(err), () => sub.complete())
@@ -29,7 +31,7 @@ export const mirror$ = (containerName: string) => new Observable<[BlobItem[], Co
         skip(res[0].length - 1),
         mapTo(res[0])
     )),
-    switchMap(() => transport$('BlobTemp'))
+    switchMap(res => iif(() => remote, transport$(folderName), of(res)))
 )
 
 export const replace$ = (containerName: string) => {

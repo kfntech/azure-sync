@@ -9,14 +9,14 @@ export const sqlDatabase$ = new Observable<Request>(sub => {
     const connection = new Connection({
         authentication: {
             options: {
-                userName: process.env.SQL_USERNAME!,
-                password: process.env.SQL_PASSWORD!
+                userName: extractString('User ID'),
+                password: extractString('Password')
             },
             type: "default"
         },
-        server: process.env.SQL_SERVER!,
+        server: extractString('Server').replace('tcp:', ''),
         options: {
-            database: process.env.SQL_DATABASE!,
+            database: extractString('Initial Catalog'),
             encrypt: true
         }
     })
@@ -55,4 +55,18 @@ export const sqlDatabase$ = new Observable<Request>(sub => {
     share()
 )
 
-export const connectionString = () => `-S ${process.env.SQL_SERVER!} -U ${process.env.SQL_USERNAME!} -P ${process.env.SQL_PASSWORD!} -d ${process.env.SQL_DATABASE!}`
+export const extractString = (key: string) => {
+    let chunk = process.env.AZURE_SQL_CONNECTION_STRING!.split(';').find(el => el.startsWith(key))!
+    return chunk.slice(chunk.indexOf('='), chunk.length - 1)
+}
+
+export const connectionString = (info?: SQLInfo) => info 
+    ? `-S ${info.server} -U ${info.username} -P ${info.server} -d ${info.database}` 
+    : `-S ${extractString('Server')} -U ${extractString('User ID')} -P ${extractString('Password')} -d ${extractString('Initial Catalog')}`
+
+interface SQLInfo {
+    server: string
+    username: string
+    password: string
+    database: string
+}

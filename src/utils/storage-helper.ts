@@ -51,9 +51,14 @@ export const blobBatch$ = of(BlobServiceClient).pipe(
  * @param containerName The name of the container to access
  * @param blobName The name of the blob to access
  */
-export const blobUrl = (containerName?: string, blobName?: string) => `https://${process.env.AZURE_STORAGE_ACCOUNT_NAME!}.blob.core.windows.net${(containerName ? `/${containerName}` : '') + (blobName ? `/${blobName}` : '') }`
+export const blobUrl = (containerName?: string, blobName?: string) => `https://${extractString('AccountName')}.blob.core.windows.net${(containerName ? `/${containerName}` : '') + (blobName ? `/${blobName}` : '') }`
 
 /**
  * Builds a Connection String used to connect to Azure Blob Storage
  */
-export const connectionString = () => `DefaultEndpointsProtocol=https;AccountName=${process.env.AZURE_STORAGE_ACCOUNT_NAME!};AccountKey=${process.env.AZURE_STORAGE_ACCOUNT_KEY!};EndpointSuffix=core.windows.net`
+export const connectionString = () => process.env.AZURE_STORAGE_CONNECTION_STRING!
+
+export const extractString = (key: string) => {
+    let chunk = process.env.AZURE_STORAGE_CONNECTION_STRING!.split(';').find(el => el.startsWith(key))!
+    return chunk.slice(chunk.indexOf('='), chunk.length - 1)
+}

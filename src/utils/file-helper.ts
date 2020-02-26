@@ -18,7 +18,7 @@ export const transport$ = (folderName: string) => new Observable<string>(sub => 
 }).pipe(
     tap(res => console.log(`SCP began for ${res}`)),
     switchMap(res => 
-        exec$(`scp -r ${res} scpuser@${process.env.MIRROR_HOST}:${process.env.MIRROR_DESTINATION}/${folderName}`).pipe(
+        exec$(`scp -r ${res} scpuser@${process.env.REMOTE_ADDRESS}/${folderName}`).pipe(
             tap(res => console.log('scp out: ', res)),
             mapTo(res)
         )

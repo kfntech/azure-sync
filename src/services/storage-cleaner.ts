@@ -1,7 +1,7 @@
 import { Observable, combineLatest, from } from 'rxjs'
 import { map, take, switchMap, tap } from 'rxjs/operators'
 import { sqlDatabase$, sendQuery$ } from '../utils/sql-helper'
-import { blobList$, setContainer$, blobBatch$, blobUrl } from '../utils/storage-helper'
+import { blobList$, setContainer$, blobBatch$, blobUrl, extractString } from '../utils/storage-helper'
 import { BlobItem, StorageSharedKeyCredential } from '@azure/storage-blob'
 
 export const find = (datasource: Array<{ tableName: string, columnName: string }>, containerName: string) => new Observable<[BlobItem[], string[]]>(sub => {
@@ -33,8 +33,8 @@ export const clear = (datasource: Array<{ tableName: string, columnName: string 
             x.deleteBlobs(
                 res, 
                 new StorageSharedKeyCredential(
-                    process.env.AZURE_STORAGE_ACCOUNT_NAME!,
-                    process.env.AZURE_STORAGE_ACCOUNT_KEY!
+                    extractString('AccountName'),
+                    extractString('AccountKey')
                 )
             )
         ))
