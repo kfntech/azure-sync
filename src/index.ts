@@ -1,12 +1,10 @@
 import minimist from 'minimist'
 import dotenv from 'dotenv'
 import { resolve } from 'path'
-import { find, clear } from './services/storage-cleaner'
-import { take, switchMap } from 'rxjs/operators'
+import { find$ as findUnused$, clear$ } from './services/storage-cleaner'
+import { take } from 'rxjs/operators'
 import { backup$ } from './services/database-backup'
 import { find$, mirror$ } from './services/storage-clone'
-import { transport$ } from './utils/file-helper'
-import { iif, of } from 'rxjs'
 
 const result = dotenv.config({ path: resolve(__dirname, '../.env') })
 if (result.error) throw result.error
@@ -19,29 +17,32 @@ switch(argv['a'] || argv['action']) {
         var container: string = argv['c'] || argv['container']
         var tables = ((argv['s'] || argv['source']) as string).split(',')
         const datasource = tables.map(el => ({ tableName: el.split(':')[0], columnName: el.split(':')[1] }));
-        console.log(`Removing unused blobs from ${container} of tables `, tables)
 
         if(argv['e'] || argv['exec']) {
-            clear(datasource, container)
+            console.log(`Removing unused blobs from ${container} of tables `, tables)
+            clear$(datasource, container)
             .subscribe(res => console.log(res), err => console.error(err))
         } else {
-            find(datasource, container)
+            console.log(`Cross matching unused blobs from ${container} of tables `, tables)
+            findUnused$(datasource, container)
             .pipe(take(1))
             .subscribe(res => console.log(res.map(el => el.name)), err => console.error(err))
         }
     break
     case 'backup':
         var tables = ((argv['s'] || argv['source']) as string).split(',')
+        var remote: boolean = argv['r'] || argv['remote']
         console.log(`Backing up tables `, tables)
 
-        backup$(tables)
+        backup$(tables, remote)
         .subscribe(() => console.log('Done'), err => console.error(err), () => process.exit(0))
     break
     case 'clone':       
         var container: string = argv['c'] || argv['container']
+        var remote: boolean = argv['r'] || argv['remote']
 
         if(argv['e'] || argv['exec']) {
-            mirror$(container)
+            mirror$(container, remote)
             .subscribe(() => console.log('Done'), err => console.error(err))   
         } else {
             find$(container).subscribe(res => console.log(res.map(el => el.name)), err => console.error(err))   

@@ -14,7 +14,7 @@ export const sqlDatabase$ = new Observable<Request>(sub => {
             },
             type: "default"
         },
-        server: extractString('Server').replace('tcp:', ''),
+        server: extractString('Server'),
         options: {
             database: extractString('Initial Catalog'),
             encrypt: true
@@ -56,8 +56,9 @@ export const sqlDatabase$ = new Observable<Request>(sub => {
 )
 
 export const extractString = (key: string) => {
-    let chunk = process.env.AZURE_SQL_CONNECTION_STRING!.split(';').find(el => el.startsWith(key))!
-    return chunk.slice(chunk.indexOf('='), chunk.length - 1)
+    const chunk = process.env.AZURE_SQL_CONNECTION_STRING!.split(';').find(el => el.startsWith(key))!
+    const value = chunk.slice(chunk.indexOf('=') + 1, chunk.length)
+    return key == 'Server' ? value.replace('tcp:', '').split(',')[0] : value
 }
 
 export const connectionString = (info?: SQLInfo) => info 

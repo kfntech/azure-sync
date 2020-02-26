@@ -59,6 +59,6 @@ export const blobUrl = (containerName?: string, blobName?: string) => `https://$
 export const connectionString = () => process.env.AZURE_STORAGE_CONNECTION_STRING!
 
 export const extractString = (key: string) => {
-    let chunk = process.env.AZURE_STORAGE_CONNECTION_STRING!.split(';').find(el => el.startsWith(key))!
-    return chunk.slice(chunk.indexOf('='), chunk.length - 1)
+    const chunk = process.env.AZURE_STORAGE_CONNECTION_STRING!.split(';').find(el => el.startsWith(key))!
+    return chunk.slice(chunk.indexOf('=') + 1, chunk.length)
 }

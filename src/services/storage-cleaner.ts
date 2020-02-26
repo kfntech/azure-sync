@@ -4,7 +4,7 @@ import { sqlDatabase$, sendQuery$ } from '../utils/sql-helper'
 import { blobList$, setContainer$, blobBatch$, blobUrl, extractString } from '../utils/storage-helper'
 import { BlobItem, StorageSharedKeyCredential } from '@azure/storage-blob'
 
-export const find = (datasource: Array<{ tableName: string, columnName: string }>, containerName: string) => new Observable<[BlobItem[], string[]]>(sub => {
+export const find$ = (datasource: Array<{ tableName: string, columnName: string }>, containerName: string) => new Observable<[BlobItem[], string[]]>(sub => {
     sub.add(
         combineLatest(
             blobList$,
@@ -25,7 +25,7 @@ export const find = (datasource: Array<{ tableName: string, columnName: string }
     map(res => res[0].reduce<BlobItem[]>((acc, cur) => res[1].includes(cur.name) ? acc : [ ...acc, cur ], []))
 )
 
-export const clear = (datasource: Array<{ tableName: string, columnName: string }>, containerName: string) => find(datasource, containerName).pipe(
+export const clear$ = (datasource: Array<{ tableName: string, columnName: string }>, containerName: string) => find$(datasource, containerName).pipe(
     tap(res => console.log(`Preparing to delete ${res.length} blobs`)),
     map(res => res.map(el => blobUrl(containerName, el.name))),
     switchMap(res => blobBatch$.pipe(
