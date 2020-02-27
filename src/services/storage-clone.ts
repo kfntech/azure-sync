@@ -3,6 +3,8 @@ import { blobList$, setContainer$, blobContainer$ } from "../utils/storage-helpe
 import { switchMap, tap, mapTo, skip } from "rxjs/operators"
 import { BlobItem, ContainerClient } from "@azure/storage-blob"
 import { write, resolveFolder, transport$ } from "../utils/file-helper"
+import { renameSync, existsSync, rmdirSync } from 'fs'
+import { resolve } from 'path'
 
 const folderName = 'BlobTemp'
 
@@ -34,6 +36,18 @@ export const mirror$ = (containerName: string, remote: boolean = false) => new O
     switchMap(res => iif(() => remote, transport$(folderName), of(res)))
 )
 
-export const replace$ = (containerName: string) => {
-    // Mirror Server
+export const replace = (containerName: string, targetPath: string) => {
+    const tempFolder = resolve(process.env.TEMP_PATH!, folderName, containerName)
+
+    if(!existsSync(tempFolder)) 
+        throw Error(`${folderName} Not found! Likely an error with remote transport from source server`)
+
+    const oldFolder = resolve(targetPath, `${containerName}.old`)
+    const folder = resolve(targetPath, containerName)
+    if(existsSync(oldFolder)) rmdirSync(oldFolder, { recursive: true })
+    if(existsSync(folder)) renameSync(folder, oldFolder)
+    
+    renameSync(tempFolder, folder)
+    console.log(`Moved ${tempFolder} to ${folder} backed up old`)
+    rmdirSync(tempFolder, { recursive: true })
 }

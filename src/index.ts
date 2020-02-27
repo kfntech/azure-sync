@@ -3,8 +3,8 @@ import dotenv from 'dotenv'
 import { resolve } from 'path'
 import { find$ as findUnused$, clear$ } from './services/storage-cleaner'
 import { take } from 'rxjs/operators'
-import { backup$ } from './services/database-backup'
-import { find$, mirror$ } from './services/storage-clone'
+import { backup$, restore$ } from './services/database-backup'
+import { find$, mirror$, replace } from './services/storage-clone'
 
 const result = dotenv.config({ path: resolve(__dirname, '../.env') })
 if (result.error) throw result.error
@@ -35,7 +35,11 @@ switch(argv['a'] || argv['action']) {
         console.log(`Backing up tables `, tables)
 
         backup$(tables, remote)
-        .subscribe(() => console.log('Done'), err => console.error(err), () => process.exit(0))
+        .subscribe(() => console.log('Done'), err => console.error(err), () => process.exit(0)) // remove exit
+    break
+    case 'restore':
+        var tables = 'Owners,SocialMedia,PatricioPersonalMoments,PatricioPersonalMusics,PatricioPersonalUpdates'.split(',')
+        restore$(tables).pipe(take(1)).subscribe(() => console.log('Done'), err => console.error(err))
     break
     case 'clone':       
         var container: string = argv['c'] || argv['container']
@@ -47,6 +51,12 @@ switch(argv['a'] || argv['action']) {
         } else {
             find$(container).subscribe(res => console.log(res.map(el => el.name)), err => console.error(err))   
         } 
+    break
+    case 'replace':
+        var container: string = argv['c'] || argv['container']
+        var targetPath: string = argv['p'] || argv['path']
+        replace(container, targetPath)
+        console.log('Done')
     break
     default: console.error('No Action specified, please assign an action with -action. For more information please consult -help')
 }

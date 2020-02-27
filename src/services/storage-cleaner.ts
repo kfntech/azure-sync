@@ -1,6 +1,6 @@
 import { Observable, combineLatest, from } from 'rxjs'
 import { map, take, switchMap, tap } from 'rxjs/operators'
-import { sqlDatabase$, sendQuery$ } from '../utils/sql-helper'
+import { queryRows$, sendQuery$, setServer$, azureConnectionConfig } from '../utils/sql-helper'
 import { blobList$, setContainer$, blobBatch$, blobUrl, extractString } from '../utils/storage-helper'
 import { BlobItem, StorageSharedKeyCredential } from '@azure/storage-blob'
 
@@ -8,7 +8,7 @@ export const find$ = (datasource: Array<{ tableName: string, columnName: string 
     sub.add(
         combineLatest(
             blobList$,
-            sqlDatabase$.pipe(
+            queryRows$.pipe(
                 map(res => res.map<string>(el => el[datasource[0].columnName].value)),
                 map(res => res.filter(el => el != null)),
             )
@@ -19,6 +19,7 @@ export const find$ = (datasource: Array<{ tableName: string, columnName: string 
         acc.concat(`select ${cur.columnName} from ${cur.tableName} union `
     ), '')
     query = query.substring(0, query.length - 7)
+    setServer$.next(azureConnectionConfig())
     setContainer$.next(containerName)
     sendQuery$.next(query)
 }).pipe(
