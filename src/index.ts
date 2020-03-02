@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 import { resolve } from 'path'
 import { find$ as findUnused$, clear$ } from './services/storage-cleaner'
 import { take } from 'rxjs/operators'
-import { backup$, restore$ } from './services/database-backup'
+import { backup$, restore$, allFileInTemp } from './services/database-backup'
 import { find$, mirror$, replace } from './services/storage-clone'
 
 const result = dotenv.config({ path: resolve(__dirname, '../.env') })
@@ -38,7 +38,8 @@ switch(argv['a'] || argv['action']) {
         .subscribe(() => console.log('Done'), err => console.error(err), () => process.exit(0)) // remove exit
     break
     case 'restore':
-        var tables = 'Owners,SocialMedia,PatricioPersonalMoments,PatricioPersonalMusics,PatricioPersonalUpdates'.split(',')
+        var tables = allFileInTemp()
+        console.log(`Restoring tables`, tables)
         restore$(tables).pipe(take(1)).subscribe(() => console.log('Done'), err => console.error(err))
     break
     case 'clone':       
