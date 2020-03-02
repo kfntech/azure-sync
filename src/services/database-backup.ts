@@ -45,7 +45,7 @@ export const allFileInTemp = () => {
 }
 
 // Reference - https://www.mssqltips.com/sqlservertip/3347/drop-and-recreate-all-foreign-key-constraints-in-sql-server/
-const clearTables = (tables: string[]) => `
+const clearTables = (tableNames: string[]) => `
 CREATE TABLE #x -- feel free to use a permanent table
 (
   drop_script NVARCHAR(MAX),
