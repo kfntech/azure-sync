@@ -1,3 +1,6 @@
+.gitignore
+**/.git
+
 /dist
 /node_modules
 .env

@@ -7,7 +7,7 @@ import { backup$, restore$, allFileInTemp } from './services/database-backup'
 import { find$, mirror$, replace } from './services/storage-clone'
 
 const result = dotenv.config({ path: resolve(__dirname, '../.env') })
-if (result.error) throw result.error
+if (result.error) console.log('No Environment Variable was found in the local .env file')
 
 const argv = minimist(process.argv.slice(2))
 console.log('Started')
@@ -58,6 +58,9 @@ switch(argv['a'] || argv['action']) {
         var targetPath: string = argv['p'] || argv['path']
         replace(container, targetPath)
         console.log('Done')
+    break
+    case 'test':
+        console.log('Argument works', process.env.MIRROR_SQL_USERNAME)
     break
     default: console.error('No Action specified, please assign an action with -action. For more information please consult -help')
 }
