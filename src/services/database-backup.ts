@@ -30,7 +30,7 @@ export const restore$ = (tableNames: string[]) => new Observable<string[]>(sub =
     sendQuery$.next(clearTables(tableNames))
 }).pipe(
     switchMap(res => concat(
-        ...res.map(el => exec$(`bcp ${el} in ${resolve(process.env.TEMP_PATH!, folderName, `${el}.dat`)} ${mirrorConnectionString()} -c -q`))
+        ...res.map(el => exec$(`bcp ${el} in ${resolve(process.env.TEMP_PATH!, folderName, `${el}.dat`)} ${mirrorConnectionString()} -c -q -E`))
     )),
     tap(res => console.log((res[0] as string).split('\n')[5])),
     skip(tableNames.length - 1),

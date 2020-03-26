@@ -8,7 +8,7 @@
     "clean": "ts-node src/index.ts --action=clean --container=patriciopersonal --source=PatricioPersonalMusics:CoverKey,PatricioPersonalMusics:AudioKey,PatricioPersonalMoments:ImageKey",
     "backup": "ts-node src/index.ts --action=backup --source=Owners,SocialMedia,PatricioPersonalMoments,PatricioPersonalMusics,PatricioPersonalUpdates -r",
     "restore": "ts-node src/index.ts --action=restore",
-    "clone": "ts-node src/index.ts --action=mirror --container=patriciopersonal -r",
+    "clone": "ts-node src/index.ts --action=clone --container=patriciopersonal -r -e",
     "replace": "ts-node src/index.ts --action=replace --container=patriciopersonal --path=/home/scpuser/transport-cache"
   },
   "author": "Michael May",
