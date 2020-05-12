@@ -5,7 +5,7 @@ import { azureConnectionString, mirrorConnectionConfig, sqlDatabase$, rowCount$,
 import { resolve } from 'path'
 import { existsSync, rmdirSync, readdirSync } from 'fs'
 
-const folderName = 'SyncTemp'
+const folderName = '.sync-temp'
 
 export const backup$ = (tableNames: string[], remote: boolean = false) => of(resolveFolder(`../${folderName}`)).pipe(
     switchMap(res => concat(

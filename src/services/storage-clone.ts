@@ -6,7 +6,7 @@ import { write, resolveFolder, transport$ } from "../utils/file-helper"
 import { renameSync, existsSync, rmdirSync } from 'fs'
 import { resolve } from 'path'
 
-const folderName = 'BlobTemp'
+const folderName = '.blob-temp'
 
 export const find$ = (containerName: string) => new Observable<BlobItem[]>(sub => {
     blobList$.subscribe(res => sub.next(res), err => sub.error(err), () => sub.complete())
