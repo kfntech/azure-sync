@@ -6,11 +6,12 @@ import { take } from 'rxjs/operators'
 import { backup$, restore$, allFileInTemp } from './services/database-backup'
 import { find$, mirror$, replace } from './services/storage-clone'
 
+console.log('Azure Sync tool started...')
+
 const result = dotenv.config({ path: resolve(__dirname, '../.env') })
-if (result.error) console.log('No Environment Variable was found in the local .env file')
+if (!result.error) console.log('Environment Variable found in .env file')
 
 const argv = minimist(process.argv.slice(2))
-console.log('Started')
 
 switch(argv['a'] || argv['action']) {
     case 'clean':
@@ -18,15 +19,15 @@ switch(argv['a'] || argv['action']) {
         var tables = ((argv['s'] || argv['source']) as string).split(',')
         const datasource = tables.map(el => ({ tableName: el.split(':')[0], columnName: el.split(':')[1] }));
 
-        if(argv['e'] || argv['exec']) {
-            console.log(`Removing unused blobs from ${container} of tables `, tables)
-            clear$(datasource, container)
-            .subscribe(res => console.log(res), err => console.error(err))
-        } else {
+        if(argv['dry-run']) {
             console.log(`Cross matching unused blobs from ${container} of tables `, tables)
             findUnused$(datasource, container)
             .pipe(take(1))
             .subscribe(res => console.log(res.map(el => el.name)), err => console.error(err))
+        } else {
+            console.log(`Removing unused blobs from ${container} of tables `, tables)
+            clear$(datasource, container)
+            .subscribe(res => console.log(res), err => console.error(err))
         }
     break
     case 'backup':
@@ -46,21 +47,19 @@ switch(argv['a'] || argv['action']) {
         var container: string = argv['c'] || argv['container']
         var remote: boolean = argv['r'] || argv['remote']
 
-        if(argv['e'] || argv['exec']) {
+        if(argv['dry-run']) {
+            find$(container)
+            .subscribe(res => console.log(res.map(el => el.name)), err => console.error(err))
+        } else {
             mirror$(container, remote)
             .subscribe(() => console.log('Done'), err => console.error(err))   
-        } else {
-            find$(container).subscribe(res => console.log(res.map(el => el.name)), err => console.error(err))   
-        } 
+        }
     break
     case 'replace':
         var container: string = argv['c'] || argv['container']
         var targetPath: string = argv['p'] || argv['path']
         replace(container, targetPath)
         console.log('Done')
-    break
-    case 'test':
-        console.log('Argument works', process.env.MIRROR_SQL_USERNAME)
     break
     default: console.error('No Action specified, please assign an action with -action. For more information please consult -help')
 }

@@ -6,10 +6,11 @@ import { resolve } from 'path'
 import { existsSync, rmdirSync, readdirSync } from 'fs'
 
 const folderName = '.sync-temp'
+const folderPath = resolve(__dirname, folderName)
 
 export const backup$ = (tableNames: string[], remote: boolean = false) => of(resolveFolder(`../${folderName}`)).pipe(
     switchMap(res => concat(
-        ...tableNames.map(el => exec$(`bcp ${el} out ${res}/${el}.dat ${azureConnectionString()} -c`))
+        ...tableNames.map(el => exec$(`/opt/mssql-tools/bin/bcp ${el} out ${res}/${el}.dat ${azureConnectionString()} -c`))
     )),
     tap(res => console.log((res[0] as string).split('\n')[5])),
     skip(tableNames.length - 1),
@@ -17,7 +18,7 @@ export const backup$ = (tableNames: string[], remote: boolean = false) => of(res
 )
 
 export const restore$ = (tableNames: string[]) => new Observable<string[]>(sub => {
-    if(!existsSync(resolve(process.env.TEMP_PATH!, folderName))) {
+    if(!existsSync(folderPath)) {
         return sub.error(new Error(`${folderName} Not found! Likely an error with remote transport from source server`))
     }
 
@@ -30,18 +31,18 @@ export const restore$ = (tableNames: string[]) => new Observable<string[]>(sub =
     sendQuery$.next(clearTables(tableNames))
 }).pipe(
     switchMap(res => concat(
-        ...res.map(el => exec$(`bcp ${el} in ${resolve(process.env.TEMP_PATH!, folderName, `${el}.dat`)} ${mirrorConnectionString()} -c -q -E`))
+        ...res.map(el => exec$(`/opt/mssql-tools/bin/bcp ${el} in ${resolve(folderPath, `${el}.dat`)} ${mirrorConnectionString()} -c -q -E`))
     )),
     tap(res => console.log((res[0] as string).split('\n')[5])),
     skip(tableNames.length - 1),
     tap(() => {
         console.log(`Deleting ${folderName}`)
-        rmdirSync(resolve(process.env.TEMP_PATH!, folderName), { recursive: true })
+        rmdirSync(folderPath, { recursive: true })
     })
 )
 
 export const allFileInTemp = () => {
-    return readdirSync(resolve(process.env.TEMP_PATH!, folderName)).map(el => el.replace('.dat', ''))
+    return readdirSync(folderPath).map(el => el.replace('.dat', ''))
 }
 
 // Reference - https://www.mssqltips.com/sqlservertip/3347/drop-and-recreate-all-foreign-key-constraints-in-sql-server/

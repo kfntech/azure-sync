@@ -7,6 +7,7 @@ import { renameSync, existsSync, rmdirSync } from 'fs'
 import { resolve } from 'path'
 
 const folderName = '.blob-temp'
+const folderPath = resolve(__dirname, folderName)
 
 export const find$ = (containerName: string) => new Observable<BlobItem[]>(sub => {
     blobList$.subscribe(res => sub.next(res), err => sub.error(err), () => sub.complete())
@@ -14,10 +15,10 @@ export const find$ = (containerName: string) => new Observable<BlobItem[]>(sub =
 })
 
 export const mirror$ = (containerName: string, remote: boolean = false) => new Observable<[BlobItem[], ContainerClient, string]>(sub => {
-    const folderPath = resolveFolder(resolveFolder(`../${folderName}`), containerName)
+    const containerPath = resolveFolder(resolveFolder(`../${folderName}`), containerName)
 
     combineLatest(blobList$, blobContainer$)
-    .subscribe(res => sub.next([res[0], res[1], folderPath]), err => sub.error(err), () => sub.complete())
+    .subscribe(res => sub.next([res[0], res[1], containerPath]), err => sub.error(err), () => sub.complete())
 
     setContainer$.next(containerName)
 }).pipe(
@@ -37,9 +38,9 @@ export const mirror$ = (containerName: string, remote: boolean = false) => new O
 )
 
 export const replace = (containerName: string, targetPath: string) => {
-    const tempFolder = resolve(process.env.TEMP_PATH!, folderName, containerName)
+    const containerPath = resolve(folderPath, containerName)
 
-    if(!existsSync(tempFolder)) 
+    if(!existsSync(containerPath)) 
         throw Error(`${folderName} Not found! Likely an error with remote transport from source server`)
 
     const oldFolder = resolve(targetPath, `${containerName}.old`)
@@ -47,7 +48,7 @@ export const replace = (containerName: string, targetPath: string) => {
     if(existsSync(oldFolder)) rmdirSync(oldFolder, { recursive: true })
     if(existsSync(folder)) renameSync(folder, oldFolder)
     
-    renameSync(tempFolder, folder)
-    console.log(`Moved ${tempFolder} to ${folder} backed up old`)
-    rmdirSync(tempFolder, { recursive: true })
+    renameSync(containerPath, folder)
+    console.log(`Moved ${containerPath} to ${folder} backed up old`)
+    rmdirSync(containerPath, { recursive: true })
 }
