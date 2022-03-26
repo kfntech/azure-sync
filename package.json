@@ -23,7 +23,7 @@
   "dependencies": {
     "@azure/storage-blob": "^12.1.0",
     "dotenv": "^8.2.0",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "rxjs": "^6.5.4",
     "tedious": "^8.0.1"
   }
